@@ -256,9 +256,9 @@ WHERE LastNode = N'Miley Cyrus'
 --Визуализация графа POWER BI с помощью FORCE-DIRECTED GRAPH
 
 SELECT @@SERVERNAME
---Сервер: DESKTOP-B1EPJ01\SQLEXPRESS
+--Сервер: GPLeopard\SQLEXPRESS
 -- База данных: MusicStudio
---https://raw.githubusercontent.com/plnalv/graphTableTask/main/images/artist1.png
+--https://raw.githubusercontent.com/dedserch/graphTableTask/main/images/artist1.png
 SELECT A1.ID IdFirst
  , A1.name AS First
  , CONCAT(N'artist',A1.id) AS [First image name]
@@ -269,3 +269,60 @@ FROM dbo.Artist AS A1
  , dbo.Featuring AS F
  , dbo.Artist AS A2
 WHERE MATCH (A1-(F)->A2)
+
+
+SELECT 
+    S.id            AS IdFirst,
+    S.name          AS First,
+    CONCAT(N'song', S.id)    AS [First image name],
+    A.id            AS IdSecond,
+    A.name          AS Second,
+    CONCAT(N'album', A.id)   AS [Second image name]
+FROM dbo.Song    AS S
+   , dbo.IncludedIn AS Inc
+   , dbo.Album   AS A
+WHERE MATCH (S-(Inc)->A)
+
+UNION ALL
+
+SELECT
+    S.id            AS IdFirst,
+    S.name          AS First,
+    CONCAT(N'song', S.id)    AS [First image name],
+    NULL           AS IdSecond,
+    N'Single Release' AS Second,
+    CONCAT(N'song', S.id)    AS [Second image name]
+FROM dbo.Song AS S
+WHERE NOT EXISTS (
+    SELECT 1 
+    FROM dbo.IncludedIn AS Inc 
+    WHERE Inc.$from_id = S.$node_id
+);
+
+SELECT 
+    AR.id                        AS IdFirst,
+    AR.name                      AS First,
+    CONCAT(N'artist', AR.id)     AS [First image name],
+    SG.id                        AS IdSecond,
+    SG.name                      AS Second,
+    CONCAT(N'song', SG.id)       AS [Second image name]
+FROM dbo.Artist   AS AR
+   , dbo.Performs AS P
+   , dbo.Song     AS SG
+WHERE MATCH (AR-(P)->SG)
+
+UNION ALL
+
+SELECT
+    AR.id                        AS IdFirst,
+    AR.name                      AS First,
+    CONCAT(N'artist', AR.id)     AS [First image name],
+    NULL                         AS IdSecond,
+    N'No Recorded Songs'         AS Second,
+    CONCAT(N'artist', AR.id)     AS [Second image name]
+FROM dbo.Artist AS AR
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM dbo.Performs AS P2
+    WHERE P2.$from_id = AR.$node_id
+);
